@@ -14,6 +14,20 @@
     <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+    <!-- 文章类别模板引擎 -->
+    <script id='essayTemplate' type="text/html">
+        {{each data v}}
+        <tr>
+            <td>{{v.name}}</td>
+            <td>{{v.slug}}</td>
+            <td class="text-center">
+                <a href="javascript:void(0)" data-toggle="modal" data-id='{{v.id}}' data-target="#myModal"
+                    class=" btn btn-info btn-xs">编辑</a>
+                <a href="javascript:void(0)" data-id='{{v.id}}' class="btn btn-danger btn-xs">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
 </head>
 
 <body>
@@ -51,5 +65,150 @@
             </table>
         </div>
     </div>
+    <!-- bootstrap 模态框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">6666</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <!-- 隐藏域 -->
+                        <input type="hidden" id="categoryId" name="">
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">分类名称:</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">分类别名:</label>
+                            <input class="form-control" id="message-text"></input>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id='addOfEdit'>6666</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./libs/http.js"></script>
+    <script>
+        $(function () {
+            //获取文章类别 通过模板引擎渲染到封面
+            function Article() {
+                $.ajax({
+                    url: window.BigNew.category_list,
+                    success: function (backData) {
+                        // console.log(backData);
+                        var essayTemplate = template('essayTemplate', backData)
+                        $('tbody').html(essayTemplate)
+                    }
+                })
+            }
+            Article()
+
+            $('#myModal').on('show.bs.modal', function (e) {
+                // console.log(e.relatedTarget);
+                // console.log($('#xinzengfenlei'));
+                if (e.relatedTarget === $('#xinzengfenlei')[0]) {
+                    $('#myModalLabel').text('新增分类')
+                    $('#addOfEdit').text('新增').addClass('btn-primary').removeClass('btn-success')
+                } else {
+                    $('#myModalLabel').text('编辑分类')
+                    $('#addOfEdit').text('编辑').addClass('btn-success').removeClass('btn-primary')
+
+                    // 点击编辑获取的信息
+                    var name = $(e.relatedTarget).parent().prev().prev().text().trim();
+                    var slug = $(e.relatedTarget).parent().prev().text().trim();
+                    var id = $(e.relatedTarget).attr('data-id')
+                    // console.log(name,slug,id);
+                    //把获取的信息赋值上去
+                    $('#recipient-name').val(name)
+                    $('#message-text').val(slug)
+                    $('#categoryId').val(id)
+
+
+                }
+            })
+            //给模态框中的，新增/编辑 按钮设置点击事件
+            $('#addOfEdit').on('click', function () {
+                if ($(this).hasClass('btn-primary')) {
+                    var Name = $('#recipient-name').val().trim()
+                    var Slug = $('#message-text').val().trim()
+                    $.ajax({
+                        type: 'post',
+                        url: window.BigNew.category_add,
+                        data: {
+                            name: Name,
+                            slug: Slug
+                        },
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 201) {
+                                alert('新增成功');
+                                Article();
+                                //模态框手动隐藏
+                                $('#myModal').modal('hide');
+                                $('#recipient-name').val('');
+                                $('#message-text').val('');
+                            }
+                        }
+                    })
+                } else {
+                    var id = $('#categoryId').val().trim()
+                    var name = $('#recipient-name').val().trim()
+                    var Slug = $('#message-text').val().trim()
+                    $.ajax({
+                        type: 'post',
+                        url: window.BigNew.category_edit,
+                        data: {
+                            id: id,
+                            name: name,
+                            slug: Slug
+                        },
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 200) {
+                                alert('修改成功');
+                                Article()
+                                //模态框手动隐藏
+                                $('#myModal').modal('hide')
+                                $('#recipient-name').val("")
+                                $('#message-text').val("")
+                            }
+
+                        }
+                    })
+                }
+            })
+
+            //删除事件
+            $('tbody').on('click','.btn-xs',function(){
+                var id = $(this).attr('data-id')
+                console.log(id);
+                $.ajax({
+                    type:'post',
+                    url:window.BigNew.category_delete,
+                    data:{
+                        id:id
+                    },
+                    success:function(backData){
+                        console.log(backData);
+                        if(backData.code==204){
+                            Article()
+                            alert(backData.msg);
+                        }
+                    }
+                })
+            })
+
+
+        })
+    </script>
+</body>
 
 </html>
