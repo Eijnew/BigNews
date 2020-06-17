@@ -187,7 +187,7 @@
             })
 
             //删除事件
-            $('tbody').on('click','.btn-xs',function(){
+            $('tbody').on('click','.btn-danger',function(){
                 var id = $(this).attr('data-id')
                 console.log(id);
                 $.ajax({
@@ -206,7 +206,10 @@
                 })
             })
 
-
+            //取消按钮的点击事件
+            $('.btn-default').on('click',function(){
+                $('form')[0].reset()
+            })
         })
     </script>
 </body>
