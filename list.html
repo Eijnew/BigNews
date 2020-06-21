@@ -227,6 +227,91 @@
     </div>
     <!-- 导包template -->
     <script src="./js/template-web.js"></script>
+    <!-- 文章列表引擎 -->
+    <script type="text/html" id="article">
+        <div class="list_title">
+            <h3>{{data.data[0].category}}</h3>
+        </div>
+        {{each data.data v}}
+        <div class="common_news_list">
+            <a href="./article.html?id={{v.id}}" class="list_pic">
+                <img src="{{v.cover}}" alt="">
+            </a>
+            <h4><a href="./article.html?id={{v.id}}">{{v.title}}</a></h4>
+            <p>{{@ v.intro}}</p>
+            <div class="new_info">
+                <span>标签：{{v.category}}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<i class="fa fa-eye"></i>&nbsp;阅读(
+                    {{v.read}}
+                    )&nbsp;&nbsp;&nbsp;<i class="fa fa-commenting"></i>&nbsp;评论( {{v.comments}} )</span>
+                <b>发布于 {{v.date}}</b>
+            </div>
+        </div>
+        {{/each}}
+    </script>
+
+    <script>
+        $(function () {
+
+            //先获取传递过来的id
+            var value = window.location.search.split('=')
+            var value1 = value[0]
+            var value2 = value[1]
+            console.log(value1, value2);
+
+            //开始判断
+            //防止网址输入跳转文章详情页面
+            if (value == '') {
+                window.location.href = './index.html'
+                //点击文章分类跳转文章详情页面
+            } else if (value1 == '?categoryId') {
+                $.ajax({
+                    url: 'http://localhost:8080/api/v1/index/search',
+                    data: {
+                        type: value2,
+                    },
+                    success: function (backData) {
+                        // console.log(backData);
+                        if (backData.code == 200) {
+                            if (backData.data.data.length > 0) {
+                                var article = template('article', backData)
+                                $('.left_con.setfr').html(article)
+                            } else {
+                                $('.left_con.setfr').html(
+                                    '<div class="list_title"><h3>没有数据</h3></div>')
+                            }
+                        }
+                    }
+                })
+                //搜索关键词跳转的页面
+            } else {
+                //先把关键词转码
+                searchTxt = decodeURI(value2);
+                $.ajax({
+                    url: 'http://localhost:8080/api/v1/index/search',
+                    data: {
+                        key: searchTxt,
+                    },
+                    success: function (backData) {
+                        console.log(backData);
+                        if (backData.code == 200) {
+                            //判断是否有文章
+                            if (backData.data.data.length > 0) {
+                                var article = template('article', backData)
+                                $('.left_con.setfr').html(article)
+                                //标题需要更换
+                                $('.list_title>h3').text('搜索结果:' + searchTxt);
+                            } else {
+                                $('.left_con.setfr').html(
+                                    '<div class="list_title"><h3>没有数据</h3></div>')
+                            }
+                        }
+                    }
+                })
+
+            };
+            
+        })
+    </script>
 </body>
 
 </html>

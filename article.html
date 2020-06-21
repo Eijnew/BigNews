@@ -208,6 +208,112 @@
     <!-- 引入模板引擎js文件 -->
     <script src="./js/template-web.js"></script>
     <script src="./js/jquery-1.12.4.min.js"></script>
+    <!-- 文章引擎模板 -->
+    <script type="text/html" id="article">
+        {{data.author}} 发布于 {{data.date}}&nbsp;&nbsp;&nbsp;分类: {{data.category}}&nbsp;&nbsp;&nbsp;阅读:
+        ({{data.read}})&nbsp;&nbsp;&nbsp;评论: ({{data.comments}})
+    </script>
+    <!-- 文章评论引擎 -->
+    <script type="text/html" id="get_comment">
+        {{each data v}}
+        <div class="comment_detail_list">
+            <div class="person_pic fl">{{v.author[0]}}</div>
+            <div class="name_time fl"><b>{{v.author}}</b><span>{{v.date}}</span></div>
+            <div class="comment_text fl">{{v.content}}</div>
+        </div>
+        {{/each}}
+    </script>
+    <script>
+        $(function () {
+            var id = window.location.search.split('=')[1]
+            // console.log(id);
+            //获取文章详情
+            if (id == '') {
+                window.location.href = './index.html'
+            } else {
+                $.ajax({
+                    url: 'http://localhost:8080/api/v1/index/article',
+                    data: {
+                        id: id
+                    },
+                    success: function (backData) {
+                        // console.log(backData);
+                        if (backData.code == 200) {
+                            $('h3.article_title').text(backData.data.title)
+                            $('div.article_con').html(backData.data.content)
+                            $('div.breadcrumb>a:eq(1)').text(backData.data.category) //文章类别
+                            $('.article_info').html(template('article', backData)) //文章info
+
+                            if (backData.data.prev == null) {
+                                $('.article_links>a:eq(0)').text('没有上一篇')
+
+                            } else {
+                                $('.article_links>a:eq(0)').text(backData.data.prev.title)
+                                $('.article_links>a:eq(0)').attr('href', './article.html?id=' +
+                                    backData.data.prev.id)
+                            }
+                            if (backData.data.next == null) {
+                                $('.article_links>a:eq(1)').text('没有下一篇')
+
+                            } else {
+                                $('.article_links>a:eq(1)').text(backData.data.next.title)
+                                $('.article_links>a:eq(1)').attr('href', './article.html?id=' +
+                                    backData.data.next.id)
+                            }
+                        }
+                    }
+                })
+            }
+
+            //获取评论列表
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/index/get_comment',
+                data: {
+                    articleId: id
+                },
+                success: function (backData) {
+                    // console.log(backData);
+                    if (backData.code == 200) {
+                        //获取多少条评论
+                        $('.comment_count').text(backData.data.length + '条评论')
+                        var getComment = template('get_comment', backData)
+                        $('.comment_list_con').html(getComment)
+                    }
+                }
+            })
+
+            //评论按钮事件
+            $('.comment_sub').on('click', function (e) {
+                e.preventDefault()
+                var author = $('.comment_name').val().trim()
+                var content = $('.comment_input').val().trim()
+                //非空判断
+                if (author == '' || content == '') {
+                    alert('不能为空')
+                    return;
+                }
+                $.ajax({
+                    type: 'post',
+                    url: 'http://localhost:8080/api/v1/index/post_comment',
+                    data: {
+                        author: author,
+                        content: content,
+                        articleId: id
+                    },
+                    success: function (backData) {
+                        console.log(backData);
+                        if (backData.code == 201) {
+                            alert('发表成功，等待审核')
+                            $('.comment_name').val("");
+                            $('.comment_input').val("");
+                        }
+                    }
+                })
+
+            })
+
+        })
+    </script>
 
 </body>
 

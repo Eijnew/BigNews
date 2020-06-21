@@ -227,7 +227,9 @@
     <script src="./js/template-web.js"></script>
     <!-- 引入jq文件 -->
     <script src="./js/jquery-1.12.4.min.js"></script>
-    <!-- 文章内容引擎 -->
+
+
+    <!-- 最新资讯引擎 -->
     <script type="text/html" id="article">
         {{each data v}}
         <div class="common_news_list">
@@ -245,14 +247,62 @@
         </div>
         {{/each}}
     </script>
-
+    <!-- 热点资讯引擎 -->
+    <script id="hot-topic" type="text/html">
+        {{each data v}}
+        {{if $index == 0}}
+        <li class="first">
+            {{else}}
+        <li>
+            {{/if}}
+            <a href="./article.html?id={{v.id}}"><img src="{{v.cover}}" alt=""></a>
+            <p>{{v.title}}</p>
+        </li>
+        {{/each}}
+    </script>
+    <!-- 热门排行 -->
+    <script type="text/html" id="hot-sort">
+        {{each data v}}
+        {{if $index==0}}
+        <li>
+            <span class="first">{{$index+1}}</span>
+            {{else if $index==1}}
+        <li>
+            <span class="second">{{$index+1}}</span>
+            {{else if $index ==2}}
+        <li>
+            <span class="third">{{$index+1}}</span>
+            {{else}}
+        <li>
+            <span>{{$index+1}}</span>
+            {{/if}}
+            <a href="./article.html?id={{v.id}}">{{v.title}}</a>
+        </li>
+        {{/each}}
+    </script>
+    <!-- 最新评论 -->
+    <script type="text/html" id="new-comment">
+        {{each data v}}
+        <li>
+            <span>{{v.author[0]}}</span>
+            <b><em>{{v.author}}</em> {{v.date}}说:</b>
+            <strong>{{v.intro}}</strong>
+        </li>
+        {{/each}}
+    </script>
+<!-- 文章分类 -->
+<script type="text/html" id="category">
+    {{each data v}}
+    <li><a href="./list.html?categoryId={{v.id}}">{{v.name}}</a></li>
+    {{/each}}
+</script>
     <script>
         $(function () {
-            //请求文章内容
+            //最新资讯
             $.ajax({
                 url: 'http://localhost:8080/api/v1/index/latest',
                 success: function (backData) {
-                    console.log(backData);
+                    // console.log(backData);
                     if (backData.code == 200) {
                         var article = template('article', backData)
                         $('.common_news').html(article)
@@ -260,10 +310,72 @@
                 }
             })
 
-            //
+            //热点资讯
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/index/hotpic',
+                success: function (backData) {
+                    // console.log(backData);
+                    if (backData.code == 200) {
+                        var hotTopic = template('hot-topic', backData)
+                        $('ul.focus_list').html(hotTopic)
+                    }
+                }
+            })
 
+            //热门排行
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/index/rank',
+                success: function (backData) {
+                    // console.log(backData);
+                    // 第一种做法
+                    // var hotSort = template('hot-sort',backData)
+                    // $('ul.hotrank_list').html(hotSort)
+                    //第二种做法
+                    for (let i = 0; i < backData.data.length; i++) {
+                        $('ul.hotrank_list>li').eq(i).children('a').text(backData.data[i].title)
+                        $('ul.hotrank_list>li').eq(i).children('a').attr('href',
+                            './article.html?id=' + backData.data[i].id)
 
+                    }
+                }
+            })
 
+            //最新评论
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/index/latest_comment',
+                success: function (backData) {
+                    // console.log(backData);
+                    if (backData.code == 200) {
+                        var newComment = template('new-comment', backData)
+                        $('ul.comment_list').html(newComment)
+                    }
+                }
+            })
+
+            //文章分类
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/index/category',
+                success: function (backData) {
+                    // console.log(backData);
+                    if(backData.code==200){
+                        var category= template('category',backData)
+                 //竖着
+                        $('ul.level_two').html('<li class="up"></li>'+category)
+                        //横着
+                        $('ul.left_menu').html(category)
+                    }
+                }
+            })
+
+            //关键词搜索
+            $('.search_btn').on('click',function(){
+                var searchWord = $('.search_txt').val().trim()
+                if(searchWord == ''){
+                    alert('请重新输入');
+                    return;
+                }
+                window.location.href = './list.html?search='+searchWord;
+            })
         })
     </script>
 </body>
